@@ -1,0 +1,70 @@
+body {
+  background: #f7f7f7;
+}
+
+.reveal h1,
+.reveal h2 {
+  color: #1f3c88;
+}
+
+input[type="text"] {
+  padding: 12px;
+  width: 320px;
+  max-width: 90%;
+  font-size: 22px;
+  border: 2px solid #1f3c88;
+  border-radius: 8px;
+  margin: 10px;
+}
+
+button {
+  padding: 12px 22px;
+  font-size: 20px;
+  border: none;
+  border-radius: 8px;
+  background: #1f3c88;
+  color: white;
+  cursor: pointer;
+  margin: 10px;
+}
+
+button:hover {
+  background: #13285c;
+}
+
+label {
+  font-size: 24px;
+  line-height: 1.8;
+}
+
+.erreur {
+  color: red;
+  font-weight: bold;
+}
+
+.correct {
+  color: green;
+  font-weight: bold;
+}
+
+.incorrect {
+  color: red;
+  font-weight: bold;
+}
+
+table {
+  width: 80%;
+  margin: auto;
+  border-collapse: collapse;
+  font-size: 24px;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 12px;
+}
+
+th {
+  background: #1f3c88;
+  color: white;
+}
