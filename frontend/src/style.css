@@ -323,3 +323,42 @@ tr:nth-child(even) {
     font-size: 13px;
   }
 }
+
+/* v2.2 controls */
+.two-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+button.secondary {
+  background: #eef2ff;
+  color: #1f3c88;
+  border: 2px solid #1f3c88;
+}
+
+button.secondary:hover {
+  background: #dfe6ff;
+}
+
+.personal-ranking {
+  max-width: 520px;
+  margin: 24px auto;
+  background: #f8f9ff;
+  border: 2px solid #dce2ff;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.personal-ranking .rank {
+  font-size: 34px;
+  font-weight: bold;
+  color: #1f3c88;
+}
+
+@media (max-width: 700px) {
+  .two-buttons {
+    display: block;
+  }
+}
