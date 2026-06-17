@@ -202,3 +202,16 @@ tr:nth-child(even) {
     font-size: 13px;
   }
 }
+
+button,
+input,
+label {
+  pointer-events: auto;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 20;
+}
+
+.quiz-card {
+  pointer-events: auto;
+}

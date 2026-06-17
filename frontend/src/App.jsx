@@ -64,13 +64,10 @@ function App() {
       slideNumber: true,
       transition: "slide",
       keyboard: true,
+      touch: true,
 
-      /*
-        Correction mobile :
-        Reveal.js capte parfois les gestes tactiles et bloque les clics
-        sur les boutons/input. On désactive donc la navigation tactile.
-      */
-      touch: false
+      // Important pour les boutons sur mobile
+      embedded: false
     });
 
     revealRef.current.initialize();
