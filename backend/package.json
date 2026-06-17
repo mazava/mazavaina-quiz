@@ -1,6 +1,6 @@
 {
-  "name": "mazavaina-quiz-v2-admin-backend",
-  "version": "2.2.0",
+  "name": "mazavaina-quiz-v2-3-backend",
+  "version": "2.3.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
