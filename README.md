@@ -1,39 +1,17 @@
-# Mazavaina Quiz v2.0 — Mobile First sans Reveal.js
+# Mazavaina Quiz v2.1 — Admin
 
-Cette version supprime Reveal.js pour corriger les problèmes de clic sur téléphone.
+Version basée sur v2.0 sans Reveal.js, avec :
+- roue dentée ⚙️ pour accéder à la configuration ;
+- admin avec mot de passe ;
+- ajout/suppression de questions ;
+- vidage du classement réservé à l'admin ;
+- backend Express + SQLite ;
+- frontend React + Vite mobile-first ;
+- compatible GitHub Pages + Render.
 
-## Technologies
+## Local
 
-- React + Vite
-- CSS responsive mobile-first
-- Backend Node.js + Express
-- SQLite
-- GitHub Pages pour le frontend
-- Render pour le backend
-
-## Structure
-
-```txt
-mazavaina-quiz-v2-mobile/
-├── .github/workflows/deploy-frontend.yml
-├── backend/
-│   ├── package.json
-│   ├── server.js
-│   ├── .env.example
-│   └── .gitignore
-└── frontend/
-    ├── package.json
-    ├── vite.config.js
-    ├── index.html
-    └── src/
-        ├── App.jsx
-        ├── main.jsx
-        └── style.css
-```
-
-## Lancer en local
-
-### Backend
+Backend :
 
 ```bash
 cd backend
@@ -42,15 +20,7 @@ cp .env.example .env
 npm run dev
 ```
 
-API locale :
-
-```txt
-http://localhost:3001
-```
-
-### Frontend
-
-Dans un autre terminal :
+Frontend :
 
 ```bash
 cd frontend
@@ -59,41 +29,29 @@ cp .env.example .env
 npm run dev
 ```
 
-Site local :
+Admin local :
 
 ```txt
-http://localhost:5173
-```
-
-## Déploiement GitHub Pages
-
-Le workflow est inclus.
-
-Dans GitHub :
-
-```txt
-Settings → Pages → Source → GitHub Actions
-```
-
-Variable GitHub Actions :
-
-```txt
-VITE_API_URL=https://ton-api-render.onrender.com
+Utilisateur : admin
+Mot de passe : admin123
 ```
 
 ## Render
 
-Configuration du backend :
-
-```txt
-Root Directory: backend
-Build Command: npm install
-Start Command: npm start
-```
-
-Variables Render :
+Variables à garder/ajouter :
 
 ```txt
 FRONTEND_URL=https://mazava.github.io
 NODE_VERSION=20
+ADMIN_USER=admin
+ADMIN_PASSWORD=ton_mot_de_passe
+ADMIN_TOKEN=un_token_secret_long
+```
+
+## GitHub Actions
+
+Variable :
+
+```txt
+VITE_API_URL=https://mazavaina-quiz-api.onrender.com
 ```

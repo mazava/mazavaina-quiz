@@ -1,6 +1,6 @@
 {
-  "name": "mazavaina-quiz-v2-frontend",
-  "version": "2.0.0",
+  "name": "mazavaina-quiz-v2-admin-frontend",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "scripts": {

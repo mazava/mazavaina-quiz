@@ -1,7 +1,6 @@
 {
-  "name": "mazavaina-quiz-v2-backend",
-  "version": "2.0.0",
-  "description": "Backend Express SQLite pour Mazavaina Quiz v2 mobile",
+  "name": "mazavaina-quiz-v2-admin-backend",
+  "version": "2.1.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

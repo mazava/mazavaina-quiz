@@ -20,16 +20,37 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .card {
-  width: min(920px, 100%);
+  width: min(980px, 100%);
   min-height: 560px;
   background: white;
   border-radius: 22px;
   padding: 34px;
   box-shadow: 0 16px 45px rgba(0, 0, 0, 0.25);
   text-align: center;
+}
+
+.settings-button {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 24px;
+  z-index: 10;
+  background: white;
+  color: #1f3c88;
+  border: 2px solid #1f3c88;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.settings-button:hover {
+  background: #f4f6ff;
 }
 
 h1,
@@ -48,15 +69,28 @@ p {
   color: #333;
 }
 
-input[type="text"] {
-  width: min(420px, 100%);
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: min(520px, 100%);
   padding: 15px;
-  margin: 16px auto;
+  margin: 14px auto;
   display: block;
   border: 2px solid #1f3c88;
   border-radius: 10px;
-  font-size: 20px;
+  font-size: 19px;
   text-align: center;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  text-align: left;
+}
+
+select {
+  background: white;
 }
 
 button {
@@ -136,7 +170,8 @@ button.danger:hover {
   color: #1f3c88;
 }
 
-.correct {
+.correct,
+.message {
   color: green;
   font-weight: bold;
 }
@@ -178,6 +213,59 @@ tr:nth-child(even) {
   margin-top: 22px;
 }
 
+.admin {
+  text-align: left;
+}
+
+.admin-header,
+.admin-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-header h1,
+.admin-title-row h2 {
+  margin: 0;
+}
+
+.admin-card {
+  margin-top: 22px;
+  padding: 22px;
+  border-radius: 18px;
+  background: #f8f9ff;
+  border: 1px solid #dce2ff;
+}
+
+.admin-card h2 {
+  text-align: center;
+}
+
+.admin-card label {
+  display: block;
+  max-width: 520px;
+  margin: 14px auto 4px;
+  font-weight: bold;
+  color: #333;
+}
+
+.question-list {
+  display: grid;
+  gap: 16px;
+}
+
+.question-admin {
+  background: white;
+  border: 1px solid #dce2ff;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.question-admin h3 {
+  color: #1f3c88;
+}
+
 @media (max-width: 700px) {
   .app {
     align-items: flex-start;
@@ -190,12 +278,21 @@ tr:nth-child(even) {
     border-radius: 18px;
   }
 
+  .settings-button {
+    width: 46px;
+    height: 46px;
+    font-size: 21px;
+    top: 10px;
+    right: 10px;
+  }
+
   h1 {
-    font-size: 31px;
+    font-size: 30px;
+    padding-right: 40px;
   }
 
   h2 {
-    font-size: 26px;
+    font-size: 25px;
   }
 
   p,
@@ -203,14 +300,23 @@ tr:nth-child(even) {
     font-size: 18px;
   }
 
-  input[type="text"] {
-    font-size: 18px;
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 17px;
   }
 
   button {
     width: 100%;
     margin: 10px 0;
     font-size: 17px;
+  }
+
+  .admin-header,
+  .admin-title-row {
+    flex-direction: column;
+    text-align: center;
   }
 
   table {
