@@ -1,137 +1,99 @@
-# Quiz React + Reveal.js + SQLite — prêt pour GitHub
+# Mazavaina Quiz v2.0 — Mobile First sans Reveal.js
 
-Ce projet contient :
+Cette version supprime Reveal.js pour corriger les problèmes de clic sur téléphone.
 
-- un frontend React + Reveal.js ;
-- un backend Node.js + Express + SQLite ;
-- un stockage persistant des pseudos et scores dans SQLite ;
-- un classement final ;
-- une configuration GitHub Pages ;
-- un workflow GitHub Actions pour déployer automatiquement le frontend.
+## Technologies
+
+- React + Vite
+- CSS responsive mobile-first
+- Backend Node.js + Express
+- SQLite
+- GitHub Pages pour le frontend
+- Render pour le backend
 
 ## Structure
 
 ```txt
-quiz-react-reveal-github-ready/
-├── .github/
-│   └── workflows/
-│       └── deploy-frontend.yml
+mazavaina-quiz-v2-mobile/
+├── .github/workflows/deploy-frontend.yml
 ├── backend/
 │   ├── package.json
 │   ├── server.js
+│   ├── .env.example
 │   └── .gitignore
-├── frontend/
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   └── src/
-│       ├── App.jsx
-│       ├── main.jsx
-│       └── style.css
-├── .gitignore
-└── README.md
+└── frontend/
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── App.jsx
+        ├── main.jsx
+        └── style.css
 ```
 
-## Important
+## Lancer en local
 
-GitHub Pages héberge uniquement le frontend statique.
-
-Le backend Node.js + SQLite ne peut pas tourner directement sur GitHub Pages.
-
-Pour tester en local :
+### Backend
 
 ```bash
 cd backend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Puis, dans un autre terminal :
+API locale :
+
+```txt
+http://localhost:3001
+```
+
+### Frontend
+
+Dans un autre terminal :
 
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-## Déploiement frontend avec GitHub Pages
-
-### 1. Créer un repo GitHub
-
-Exemple :
+Site local :
 
 ```txt
-quiz-react-reveal-github-ready
+http://localhost:5173
 ```
 
-### 2. Modifier le nom du repo dans `frontend/vite.config.js`
+## Déploiement GitHub Pages
 
-Dans ce fichier :
-
-```js
-base: "/quiz-react-reveal-github-ready/"
-```
-
-Remplace `quiz-react-reveal-github-ready` par le nom exact de ton repo GitHub.
-
-### 3. Pousser le projet
-
-```bash
-git init
-git add .
-git commit -m "Initialisation du quiz React Reveal"
-git branch -M main
-git remote add origin https://github.com/TON_COMPTE/NOM_DU_REPO.git
-git push -u origin main
-```
-
-### 4. Activer GitHub Pages
+Le workflow est inclus.
 
 Dans GitHub :
 
 ```txt
-Settings → Pages
+Settings → Pages → Source → GitHub Actions
 ```
 
-Puis choisir :
+Variable GitHub Actions :
 
 ```txt
-Source: GitHub Actions
+VITE_API_URL=https://ton-api-render.onrender.com
 ```
 
-Le workflow `.github/workflows/deploy-frontend.yml` va publier automatiquement le frontend.
+## Render
 
-## URL finale
-
-Ton site sera disponible à une adresse de ce type :
+Configuration du backend :
 
 ```txt
-https://TON_COMPTE.github.io/NOM_DU_REPO/
+Root Directory: backend
+Build Command: npm install
+Start Command: npm start
 ```
 
-## Backend en ligne
-
-Pour que le classement fonctionne en ligne, il faut déployer le backend sur un service comme :
-
-- Render ;
-- Railway ;
-- Fly.io ;
-- VPS.
-
-Ensuite, dans `frontend/src/App.jsx`, remplace :
-
-```js
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-```
-
-Puis ajoute dans GitHub Actions ou dans un fichier `.env.production` :
+Variables Render :
 
 ```txt
-VITE_API_URL=https://ton-backend-en-ligne.com
-```
-
-En local, tu peux garder :
-
-```txt
-http://localhost:3001
+FRONTEND_URL=https://mazava.github.io
+NODE_VERSION=20
 ```

@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
@@ -7,12 +9,13 @@ const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:4173",
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -26,7 +29,7 @@ app.use(express.json());
 
 const db = new sqlite3.Database("./quiz.db", (err) => {
   if (err) {
-    console.error("Erreur de connexion SQLite :", err.message);
+    console.error("Erreur connexion SQLite :", err.message);
   } else {
     console.log("Base SQLite connectée.");
   }
@@ -46,11 +49,11 @@ db.serialize(() => {
 
 app.get("/", (req, res) => {
   res.json({
-    message: "API Quiz React + Reveal.js opérationnelle",
+    message: "API Mazavaina Quiz v2 opérationnelle",
     endpoints: {
-      enregistrer: "POST /resultats",
+      resultats: "POST /resultats",
       classement: "GET /classement",
-      vider: "DELETE /classement"
+      viderClassement: "DELETE /classement"
     }
   });
 });
@@ -65,26 +68,24 @@ app.post("/resultats", (req, res) => {
   }
 
   if (typeof score !== "number" || score < 0) {
-    return res.status(400).json({
-      error: "Le score doit être un nombre positif."
-    });
+    return res.status(400).json({ error: "Le score doit être un nombre positif." });
   }
 
-  const totalQuestions = typeof total === "number" ? total : 3;
+  if (typeof total !== "number" || total < 1) {
+    return res.status(400).json({ error: "Le total doit être un nombre positif." });
+  }
 
   db.run(
     "INSERT INTO resultats (pseudo, score, total) VALUES (?, ?, ?)",
-    [pseudo.trim(), score, totalQuestions],
+    [pseudo.trim(), score, total],
     function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+      if (err) return res.status(500).json({ error: err.message });
 
       res.status(201).json({
         id: this.lastID,
         pseudo: pseudo.trim(),
         score,
-        total: totalQuestions
+        total
       });
     }
   );
@@ -100,10 +101,7 @@ app.get("/classement", (req, res) => {
     `,
     [],
     (err, rows) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-
+      if (err) return res.status(500).json({ error: err.message });
       res.json(rows);
     }
   );
@@ -111,9 +109,7 @@ app.get("/classement", (req, res) => {
 
 app.delete("/classement", (req, res) => {
   db.run("DELETE FROM resultats", [], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
 
     res.json({
       message: "Classement vidé avec succès.",

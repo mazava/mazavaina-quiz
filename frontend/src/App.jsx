@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import Reveal from "reveal.js";
+import { useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -39,57 +38,28 @@ const questions = [
 ];
 
 function App() {
-  const deckRef = useRef(null);
-  const revealRef = useRef(null);
-
+  const [page, setPage] = useState("accueil");
   const [pseudo, setPseudo] = useState("");
   const [pseudoValide, setPseudoValide] = useState("");
+  const [indexQuestion, setIndexQuestion] = useState(0);
   const [score, setScore] = useState(0);
-  const [reponseSimple, setReponseSimple] = useState("");
-  const [reponsesMultiples, setReponsesMultiples] = useState([]);
-  const [reponseTexte, setReponseTexte] = useState("");
-  const [feedbacks, setFeedbacks] = useState({});
+  const [reponses, setReponses] = useState({});
   const [questionsValidees, setQuestionsValidees] = useState({});
+  const [feedback, setFeedback] = useState("");
   const [classement, setClassement] = useState([]);
   const [resultatEnregistre, setResultatEnregistre] = useState(false);
   const [erreur, setErreur] = useState("");
 
+  const questionActuelle = questions[indexQuestion];
+
+  const progression = useMemo(() => {
+    if (page !== "quiz") return 0;
+    return Math.round(((indexQuestion + 1) / questions.length) * 100);
+  }, [page, indexQuestion]);
+
   useEffect(() => {
-    if (!deckRef.current || revealRef.current) return;
-
-    revealRef.current = new Reveal(deckRef.current, {
-      hash: true,
-      controls: true,
-      progress: true,
-      slideNumber: true,
-      transition: "slide",
-      keyboard: true,
-      touch: true,
-      embedded: false
-    });
-
-    revealRef.current.initialize();
     chargerClassement();
-
-    return () => {
-      try {
-        revealRef.current?.destroy();
-      } catch (error) {
-        console.error(error);
-      }
-      revealRef.current = null;
-    };
   }, []);
-
-  function handleTap(event, callback) {
-    event.preventDefault();
-    event.stopPropagation();
-    callback();
-  }
-
-  function allerSlide(index) {
-    revealRef.current?.slide(index);
-  }
 
   function demarrerQuiz() {
     const nom = pseudo.trim();
@@ -101,55 +71,65 @@ function App() {
 
     setPseudoValide(nom);
     setErreur("");
-    allerSlide(1);
+    setPage("quiz");
   }
 
-  function cocherChoixMultiple(option) {
-    setReponsesMultiples((anciennesReponses) => {
-      if (anciennesReponses.includes(option)) {
-        return anciennesReponses.filter((item) => item !== option);
-      }
-      return [...anciennesReponses, option];
-    });
-  }
-
-  function mettreFeedback(questionId, message, type) {
-    setFeedbacks((anciens) => ({
-      ...anciens,
-      [questionId]: { message, type }
+  function changerReponse(questionId, valeur) {
+    setReponses((anciennes) => ({
+      ...anciennes,
+      [questionId]: valeur
     }));
   }
 
-  function validerQuestion(question) {
-    if (!pseudoValide) {
-      setErreur("Tu dois d'abord créer un pseudo.");
-      allerSlide(0);
-      return;
+  function cocherChoixMultiple(questionId, option) {
+    const actuelles = reponses[questionId] || [];
+
+    if (actuelles.includes(option)) {
+      changerReponse(
+        questionId,
+        actuelles.filter((item) => item !== option)
+      );
+    } else {
+      changerReponse(questionId, [...actuelles, option]);
     }
+  }
+
+  function normaliserTexte(texte) {
+    return String(texte)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function validerQuestion() {
+    const question = questionActuelle;
 
     if (questionsValidees[question.id]) {
-      allerSlide(question.id + 1);
+      allerQuestionSuivante();
       return;
     }
 
+    const reponse = reponses[question.id];
     let correct = false;
 
     if (question.type === "single") {
-      if (!reponseSimple) {
-        mettreFeedback(question.id, "Choisis une réponse.", "incorrect");
+      if (!reponse) {
+        setFeedback("Choisis une réponse.");
         return;
       }
-      correct = reponseSimple === question.bonneReponse;
+
+      correct = reponse === question.bonneReponse;
     }
 
     if (question.type === "multiple") {
-      if (reponsesMultiples.length === 0) {
-        mettreFeedback(question.id, "Choisis au moins une réponse.", "incorrect");
+      if (!Array.isArray(reponse) || reponse.length === 0) {
+        setFeedback("Choisis au moins une réponse.");
         return;
       }
 
       const attendues = [...question.bonnesReponses].sort();
-      const donnees = [...reponsesMultiples].sort();
+      const donnees = [...reponse].sort();
 
       correct =
         attendues.length === donnees.length &&
@@ -157,21 +137,21 @@ function App() {
     }
 
     if (question.type === "text") {
-      const texte = reponseTexte.trim().toLowerCase();
-
-      if (!texte) {
-        mettreFeedback(question.id, "Complète la phrase.", "incorrect");
+      if (!reponse || !String(reponse).trim()) {
+        setFeedback("Complète la phrase.");
         return;
       }
 
-      correct = question.bonnesReponses.includes(texte);
+      correct = question.bonnesReponses
+        .map(normaliserTexte)
+        .includes(normaliserTexte(reponse));
     }
 
     if (correct) {
-      setScore((ancienScore) => ancienScore + 1);
-      mettreFeedback(question.id, "Bonne réponse !", "correct");
+      setScore((ancien) => ancien + 1);
+      setFeedback("Bonne réponse !");
     } else {
-      mettreFeedback(question.id, "Mauvaise réponse.", "incorrect");
+      setFeedback("Mauvaise réponse.");
     }
 
     setQuestionsValidees((anciennes) => ({
@@ -180,13 +160,23 @@ function App() {
     }));
 
     setTimeout(() => {
-      allerSlide(question.id + 1);
-    }, 900);
+      allerQuestionSuivante();
+    }, 700);
+  }
+
+  function allerQuestionSuivante() {
+    setFeedback("");
+
+    if (indexQuestion < questions.length - 1) {
+      setIndexQuestion((ancien) => ancien + 1);
+    } else {
+      setPage("resultat");
+    }
   }
 
   async function enregistrerResultat() {
     if (resultatEnregistre) {
-      allerSlide(5);
+      setPage("classement");
       return;
     }
 
@@ -203,11 +193,13 @@ function App() {
         })
       });
 
-      if (!response.ok) throw new Error("Erreur API");
+      if (!response.ok) {
+        throw new Error("Erreur API");
+      }
 
       setResultatEnregistre(true);
       await chargerClassement();
-      allerSlide(5);
+      setPage("classement");
     } catch (error) {
       setErreur(
         "Impossible d'enregistrer le résultat. Vérifie que le backend est lancé ou que VITE_API_URL est configuré."
@@ -230,6 +222,7 @@ function App() {
       await fetch(`${API_URL}/classement`, {
         method: "DELETE"
       });
+
       await chargerClassement();
     } catch (error) {
       setErreur("Impossible de vider le classement.");
@@ -237,177 +230,114 @@ function App() {
   }
 
   function recommencer() {
+    setPage("accueil");
     setPseudo("");
     setPseudoValide("");
+    setIndexQuestion(0);
     setScore(0);
-    setReponseSimple("");
-    setReponsesMultiples([]);
-    setReponseTexte("");
-    setFeedbacks({});
+    setReponses({});
     setQuestionsValidees({});
-    setResultatEnregistre(false);
+    setFeedback("");
     setErreur("");
-    allerSlide(0);
+    setResultatEnregistre(false);
   }
 
   return (
-    <div className="reveal quiz-reveal" ref={deckRef}>
-      <div className="slides">
-        <section>
-          <div className="quiz-card">
-            <h1>Bienvenue au Quiz</h1>
-            <p>Crée ton pseudo avant de commencer.</p>
-
-            <input
-              type="text"
-              placeholder="Entre ton pseudo"
-              value={pseudo}
-              onChange={(e) => setPseudo(e.target.value)}
-              onPointerUp={(e) => e.stopPropagation()}
-            />
-
-            <button
-              type="button"
-              onPointerUp={(e) => handleTap(e, demarrerQuiz)}
-              onClick={(e) => handleTap(e, demarrerQuiz)}
-            >
-              Démarrer le Quiz
-            </button>
-
-            {erreur && <p className="erreur">{erreur}</p>}
-
-            <p className="small">
-              Navigation Reveal.js : boutons, clavier et progression.
-            </p>
-          </div>
-        </section>
-
-        <section>
-          <SlideQuestion
-            question={questions[0]}
-            pseudo={pseudoValide}
-            reponseSimple={reponseSimple}
-            setReponseSimple={setReponseSimple}
-            feedback={feedbacks[1]}
-            validerQuestion={validerQuestion}
-            handleTap={handleTap}
+    <main className="app">
+      <section className="card">
+        {page === "accueil" && (
+          <Accueil
+            pseudo={pseudo}
+            setPseudo={setPseudo}
+            demarrerQuiz={demarrerQuiz}
+            erreur={erreur}
           />
-        </section>
+        )}
 
-        <section>
-          <SlideQuestion
-            question={questions[1]}
+        {page === "quiz" && (
+          <QuizPage
             pseudo={pseudoValide}
-            reponsesMultiples={reponsesMultiples}
+            question={questionActuelle}
+            indexQuestion={indexQuestion}
+            totalQuestions={questions.length}
+            progression={progression}
+            reponse={reponses[questionActuelle.id]}
+            changerReponse={changerReponse}
             cocherChoixMultiple={cocherChoixMultiple}
-            feedback={feedbacks[2]}
             validerQuestion={validerQuestion}
-            handleTap={handleTap}
+            feedback={feedback}
           />
-        </section>
+        )}
 
-        <section>
-          <SlideQuestion
-            question={questions[2]}
+        {page === "resultat" && (
+          <ResultatPage
             pseudo={pseudoValide}
-            reponseTexte={reponseTexte}
-            setReponseTexte={setReponseTexte}
-            feedback={feedbacks[3]}
-            validerQuestion={validerQuestion}
-            handleTap={handleTap}
+            score={score}
+            total={questions.length}
+            enregistrerResultat={enregistrerResultat}
+            erreur={erreur}
           />
-        </section>
+        )}
 
-        <section>
-          <div className="quiz-card">
-            <h2>Résultat final</h2>
-
-            <p className="score">
-              {pseudoValide || "Joueur"}, ton score est de {score}/{questions.length}.
-            </p>
-
-            <button
-              type="button"
-              onPointerUp={(e) => handleTap(e, enregistrerResultat)}
-              onClick={(e) => handleTap(e, enregistrerResultat)}
-            >
-              Enregistrer et voir le classement
-            </button>
-
-            {erreur && <p className="erreur">{erreur}</p>}
-          </div>
-        </section>
-
-        <section>
-          <div className="quiz-card classement-card">
-            <h2>Classement des utilisateurs</h2>
-
-            {classement.length === 0 ? (
-              <p>Aucun résultat enregistré pour le moment.</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Rang</th>
-                    <th>Pseudo</th>
-                    <th>Score</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {classement.map((joueur, index) => (
-                    <tr key={joueur.id}>
-                      <td>{index + 1}</td>
-                      <td>{joueur.pseudo}</td>
-                      <td>{joueur.score}/{joueur.total}</td>
-                      <td>{new Date(joueur.date_creation).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            <div className="actions">
-              <button
-                type="button"
-                onPointerUp={(e) => handleTap(e, recommencer)}
-                onClick={(e) => handleTap(e, recommencer)}
-              >
-                Recommencer
-              </button>
-
-              <button
-                type="button"
-                className="danger"
-                onPointerUp={(e) => handleTap(e, viderClassement)}
-                onClick={(e) => handleTap(e, viderClassement)}
-              >
-                Vider le classement
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
+        {page === "classement" && (
+          <ClassementPage
+            classement={classement}
+            recommencer={recommencer}
+            viderClassement={viderClassement}
+          />
+        )}
+      </section>
+    </main>
   );
 }
 
-function SlideQuestion({
-  question,
+function Accueil({ pseudo, setPseudo, demarrerQuiz, erreur }) {
+  return (
+    <>
+      <h1>Bienvenue au Quiz</h1>
+      <p>Crée ton pseudo avant de commencer.</p>
+
+      <input
+        type="text"
+        placeholder="Entre ton pseudo"
+        value={pseudo}
+        onChange={(e) => setPseudo(e.target.value)}
+      />
+
+      <button type="button" onClick={demarrerQuiz}>
+        Démarrer le Quiz
+      </button>
+
+      {erreur && <p className="erreur">{erreur}</p>}
+
+      <p className="note">Version mobile-first sans Reveal.js</p>
+    </>
+  );
+}
+
+function QuizPage({
   pseudo,
-  reponseSimple,
-  setReponseSimple,
-  reponsesMultiples,
+  question,
+  indexQuestion,
+  totalQuestions,
+  progression,
+  reponse,
+  changerReponse,
   cocherChoixMultiple,
-  reponseTexte,
-  setReponseTexte,
-  feedback,
   validerQuestion,
-  handleTap
+  feedback
 }) {
   return (
-    <div className="quiz-card">
-      <p className="pseudo">Joueur : {pseudo || "pseudo non créé"}</p>
+    <>
+      <p className="pseudo">Joueur : {pseudo}</p>
+
+      <div className="progress-wrapper">
+        <div className="progress-bar" style={{ width: `${progression}%` }} />
+      </div>
+
+      <p className="question-count">
+        Question {indexQuestion + 1} / {totalQuestions}
+      </p>
 
       <h2>{question.titre}</h2>
       <p className="question">{question.question}</p>
@@ -415,15 +345,14 @@ function SlideQuestion({
       {question.type === "single" && (
         <div className="options">
           {question.options.map((option) => (
-            <label key={option}>
+            <label className="option" key={option}>
               <input
                 type="radio"
                 name={`question-${question.id}`}
-                checked={reponseSimple === option}
-                onChange={() => setReponseSimple(option)}
-                onPointerUp={(e) => e.stopPropagation()}
+                checked={reponse === option}
+                onChange={() => changerReponse(question.id, option)}
               />
-              {option}
+              <span>{option}</span>
             </label>
           ))}
         </div>
@@ -432,14 +361,13 @@ function SlideQuestion({
       {question.type === "multiple" && (
         <div className="options">
           {question.options.map((option) => (
-            <label key={option}>
+            <label className="option" key={option}>
               <input
                 type="checkbox"
-                checked={reponsesMultiples.includes(option)}
-                onChange={() => cocherChoixMultiple(option)}
-                onPointerUp={(e) => e.stopPropagation()}
+                checked={Array.isArray(reponse) && reponse.includes(option)}
+                onChange={() => cocherChoixMultiple(question.id, option)}
               />
-              {option}
+              <span>{option}</span>
             </label>
           ))}
         </div>
@@ -449,26 +377,85 @@ function SlideQuestion({
         <input
           type="text"
           placeholder="Ta réponse"
-          value={reponseTexte}
-          onChange={(e) => setReponseTexte(e.target.value)}
-          onPointerUp={(e) => e.stopPropagation()}
+          value={reponse || ""}
+          onChange={(e) => changerReponse(question.id, e.target.value)}
         />
       )}
 
-      <button
-        type="button"
-        onPointerUp={(e) => handleTap(e, () => validerQuestion(question))}
-        onClick={(e) => handleTap(e, () => validerQuestion(question))}
-      >
+      <button type="button" onClick={validerQuestion}>
         Valider
       </button>
 
       {feedback && (
-        <p className={feedback.type === "correct" ? "correct" : "incorrect"}>
-          {feedback.message}
+        <p className={feedback.includes("Bonne") ? "correct" : "incorrect"}>
+          {feedback}
         </p>
       )}
-    </div>
+    </>
+  );
+}
+
+function ResultatPage({ pseudo, score, total, enregistrerResultat, erreur }) {
+  return (
+    <>
+      <h2>Résultat final</h2>
+      <p className="score">
+        {pseudo}, ton score est de {score}/{total}.
+      </p>
+
+      <button type="button" onClick={enregistrerResultat}>
+        Enregistrer et voir le classement
+      </button>
+
+      {erreur && <p className="erreur">{erreur}</p>}
+    </>
+  );
+}
+
+function ClassementPage({ classement, recommencer, viderClassement }) {
+  return (
+    <>
+      <h2>Classement des utilisateurs</h2>
+
+      {classement.length === 0 ? (
+        <p>Aucun résultat enregistré pour le moment.</p>
+      ) : (
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Rang</th>
+                <th>Pseudo</th>
+                <th>Score</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {classement.map((joueur, index) => (
+                <tr key={joueur.id}>
+                  <td>{index + 1}</td>
+                  <td>{joueur.pseudo}</td>
+                  <td>
+                    {joueur.score}/{joueur.total}
+                  </td>
+                  <td>{new Date(joueur.date_creation).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="actions">
+        <button type="button" onClick={recommencer}>
+          Recommencer
+        </button>
+
+        <button type="button" className="danger" onClick={viderClassement}>
+          Vider le classement
+        </button>
+      </div>
+    </>
   );
 }
 
