@@ -64,11 +64,16 @@ function App() {
       slideNumber: true,
       transition: "slide",
       keyboard: true,
-      touch: true
+
+      /*
+        Correction mobile :
+        Reveal.js capte parfois les gestes tactiles et bloque les clics
+        sur les boutons/input. On désactive donc la navigation tactile.
+      */
+      touch: false
     });
 
     revealRef.current.initialize();
-
     chargerClassement();
 
     return () => {
@@ -269,7 +274,7 @@ function App() {
             {erreur && <p className="erreur">{erreur}</p>}
 
             <p className="small">
-              Navigation Reveal.js : clavier, boutons, progression et slides.
+              Navigation Reveal.js : boutons, clavier et progression.
             </p>
           </div>
         </section>
