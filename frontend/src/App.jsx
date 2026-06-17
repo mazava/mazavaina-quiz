@@ -65,8 +65,6 @@ function App() {
       transition: "slide",
       keyboard: true,
       touch: true,
-
-      // Important pour les boutons sur mobile
       embedded: false
     });
 
@@ -82,6 +80,12 @@ function App() {
       revealRef.current = null;
     };
   }, []);
+
+  function handleTap(event, callback) {
+    event.preventDefault();
+    event.stopPropagation();
+    callback();
+  }
 
   function allerSlide(index) {
     revealRef.current?.slide(index);
@@ -105,7 +109,6 @@ function App() {
       if (anciennesReponses.includes(option)) {
         return anciennesReponses.filter((item) => item !== option);
       }
-
       return [...anciennesReponses, option];
     });
   }
@@ -136,7 +139,6 @@ function App() {
         mettreFeedback(question.id, "Choisis une réponse.", "incorrect");
         return;
       }
-
       correct = reponseSimple === question.bonneReponse;
     }
 
@@ -201,9 +203,7 @@ function App() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur API");
-      }
+      if (!response.ok) throw new Error("Erreur API");
 
       setResultatEnregistre(true);
       await chargerClassement();
@@ -230,7 +230,6 @@ function App() {
       await fetch(`${API_URL}/classement`, {
         method: "DELETE"
       });
-
       await chargerClassement();
     } catch (error) {
       setErreur("Impossible de vider le classement.");
@@ -264,9 +263,16 @@ function App() {
               placeholder="Entre ton pseudo"
               value={pseudo}
               onChange={(e) => setPseudo(e.target.value)}
+              onPointerUp={(e) => e.stopPropagation()}
             />
 
-            <button onClick={demarrerQuiz}>Démarrer le Quiz</button>
+            <button
+              type="button"
+              onPointerUp={(e) => handleTap(e, demarrerQuiz)}
+              onClick={(e) => handleTap(e, demarrerQuiz)}
+            >
+              Démarrer le Quiz
+            </button>
 
             {erreur && <p className="erreur">{erreur}</p>}
 
@@ -284,6 +290,7 @@ function App() {
             setReponseSimple={setReponseSimple}
             feedback={feedbacks[1]}
             validerQuestion={validerQuestion}
+            handleTap={handleTap}
           />
         </section>
 
@@ -295,6 +302,7 @@ function App() {
             cocherChoixMultiple={cocherChoixMultiple}
             feedback={feedbacks[2]}
             validerQuestion={validerQuestion}
+            handleTap={handleTap}
           />
         </section>
 
@@ -306,6 +314,7 @@ function App() {
             setReponseTexte={setReponseTexte}
             feedback={feedbacks[3]}
             validerQuestion={validerQuestion}
+            handleTap={handleTap}
           />
         </section>
 
@@ -317,7 +326,11 @@ function App() {
               {pseudoValide || "Joueur"}, ton score est de {score}/{questions.length}.
             </p>
 
-            <button onClick={enregistrerResultat}>
+            <button
+              type="button"
+              onPointerUp={(e) => handleTap(e, enregistrerResultat)}
+              onClick={(e) => handleTap(e, enregistrerResultat)}
+            >
               Enregistrer et voir le classement
             </button>
 
@@ -346,9 +359,7 @@ function App() {
                     <tr key={joueur.id}>
                       <td>{index + 1}</td>
                       <td>{joueur.pseudo}</td>
-                      <td>
-                        {joueur.score}/{joueur.total}
-                      </td>
+                      <td>{joueur.score}/{joueur.total}</td>
                       <td>{new Date(joueur.date_creation).toLocaleString()}</td>
                     </tr>
                   ))}
@@ -357,8 +368,20 @@ function App() {
             )}
 
             <div className="actions">
-              <button onClick={recommencer}>Recommencer</button>
-              <button className="danger" onClick={viderClassement}>
+              <button
+                type="button"
+                onPointerUp={(e) => handleTap(e, recommencer)}
+                onClick={(e) => handleTap(e, recommencer)}
+              >
+                Recommencer
+              </button>
+
+              <button
+                type="button"
+                className="danger"
+                onPointerUp={(e) => handleTap(e, viderClassement)}
+                onClick={(e) => handleTap(e, viderClassement)}
+              >
                 Vider le classement
               </button>
             </div>
@@ -379,7 +402,8 @@ function SlideQuestion({
   reponseTexte,
   setReponseTexte,
   feedback,
-  validerQuestion
+  validerQuestion,
+  handleTap
 }) {
   return (
     <div className="quiz-card">
@@ -397,6 +421,7 @@ function SlideQuestion({
                 name={`question-${question.id}`}
                 checked={reponseSimple === option}
                 onChange={() => setReponseSimple(option)}
+                onPointerUp={(e) => e.stopPropagation()}
               />
               {option}
             </label>
@@ -412,6 +437,7 @@ function SlideQuestion({
                 type="checkbox"
                 checked={reponsesMultiples.includes(option)}
                 onChange={() => cocherChoixMultiple(option)}
+                onPointerUp={(e) => e.stopPropagation()}
               />
               {option}
             </label>
@@ -425,10 +451,17 @@ function SlideQuestion({
           placeholder="Ta réponse"
           value={reponseTexte}
           onChange={(e) => setReponseTexte(e.target.value)}
+          onPointerUp={(e) => e.stopPropagation()}
         />
       )}
 
-      <button onClick={() => validerQuestion(question)}>Valider</button>
+      <button
+        type="button"
+        onPointerUp={(e) => handleTap(e, () => validerQuestion(question))}
+        onClick={(e) => handleTap(e, () => validerQuestion(question))}
+      >
+        Valider
+      </button>
 
       {feedback && (
         <p className={feedback.type === "correct" ? "correct" : "incorrect"}>
