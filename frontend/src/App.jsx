@@ -47,7 +47,7 @@ function App() {
 
   const [adminToken, setAdminToken] = useState(localStorage.getItem("adminToken") || "");
   const [adminConnecte, setAdminConnecte] = useState(Boolean(localStorage.getItem("adminToken")));
-  const [adminUser, setAdminUser] = useState("admin");
+  const [adminUser, setAdminUser] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [formQuestion, setFormQuestion] = useState({
     titre: "",
@@ -749,13 +749,15 @@ function AdminPage(props) {
           <h2>Connexion admin</h2>
           <input
             type="text"
-            placeholder="Identifiant"
+            placeholder="Nom d'utilisateur"
+            autoComplete="username"
             value={adminUser}
             onChange={(e) => setAdminUser(e.target.value)}
           />
           <input
             type="password"
             placeholder="Mot de passe"
+            autoComplete="current-password"
             value={adminPassword}
             onChange={(e) => setAdminPassword(e.target.value)}
           />
