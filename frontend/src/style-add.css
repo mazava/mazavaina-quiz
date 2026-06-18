@@ -1,0 +1,13 @@
+
+/* Timer question */
+.timer-box {
+  display: inline-block;
+  margin: 10px auto 16px;
+  padding: 10px 16px;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 2px solid #fed7aa;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 15px;
+}

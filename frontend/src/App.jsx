@@ -44,6 +44,9 @@ function App() {
   const [resultatEnregistre, setResultatEnregistre] = useState(false);
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
+  const [questionStartTime, setQuestionStartTime] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [questionTimes, setQuestionTimes] = useState({});
 
   const [adminToken, setAdminToken] = useState(localStorage.getItem("adminToken") || "");
   const [adminConnecte, setAdminConnecte] = useState(Boolean(localStorage.getItem("adminToken")));
@@ -68,6 +71,16 @@ function App() {
     chargerQuestions();
     chargerClassement();
   }, []);
+
+  useEffect(() => {
+    if (page !== "quiz" || !questionStartTime) return;
+
+    const intervalId = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - questionStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [page, questionStartTime, indexQuestion]);
 
   async function chargerQuestions() {
     try {
@@ -117,6 +130,13 @@ function App() {
 
     setPseudoValide(nom);
     setErreur("");
+    setIndexQuestion(0);
+    setScore(0);
+    setReponses({});
+    setQuestionsValidees({});
+    setQuestionTimes({});
+    setElapsedSeconds(0);
+    setQuestionStartTime(Date.now());
     setPage("quiz");
   }
 
@@ -178,11 +198,20 @@ function App() {
         .includes(normalizeText(reponse));
     }
 
+    const tempsReponse = questionStartTime
+      ? Math.max(1, Math.floor((Date.now() - questionStartTime) / 1000))
+      : elapsedSeconds;
+
+    setQuestionTimes((anciennes) => ({
+      ...anciennes,
+      [question.id]: tempsReponse
+    }));
+
     if (correct) {
       setScore((ancien) => ancien + 1);
-      setFeedback("Bonne réponse !");
+      setFeedback(`Bonne réponse ! Temps : ${tempsReponse} seconde(s).`);
     } else {
-      setFeedback("Mauvaise réponse.");
+      setFeedback(`Mauvaise réponse. Temps : ${tempsReponse} seconde(s).`);
     }
 
     setQuestionsValidees((anciennes) => ({ ...anciennes, [question.id]: true }));
@@ -194,17 +223,11 @@ function App() {
 
     if (indexQuestion < questions.length - 1) {
       setIndexQuestion((ancien) => ancien + 1);
+      setElapsedSeconds(0);
+      setQuestionStartTime(Date.now());
     } else {
+      setQuestionStartTime(null);
       setPage("resultat");
-    }
-  }
-
-  function revenirQuestionPrecedente() {
-    if (indexQuestion > 0) {
-      setFeedback("");
-      setIndexQuestion((ancien) => ancien - 1);
-    } else {
-      setPage("accueil");
     }
   }
 
@@ -260,6 +283,9 @@ function App() {
     setFeedback("");
     setErreur("");
     setMessage("");
+    setElapsedSeconds(0);
+    setQuestionStartTime(null);
+    setQuestionTimes({});
   }
 
   function ouvrirAdmin() {
@@ -447,7 +473,8 @@ function App() {
             changerReponse={changerReponse}
             cocherChoixMultiple={cocherChoixMultiple}
             validerQuestion={validerQuestion}
-            revenirQuestionPrecedente={revenirQuestionPrecedente}
+            elapsedSeconds={elapsedSeconds}
+            tempsQuestion={questionTimes[questionActuelle.id]}
             feedback={feedback}
           />
         )}
@@ -458,7 +485,6 @@ function App() {
             score={score}
             total={questions.length}
             enregistrerResultat={enregistrerResultat}
-            revenir={() => setPage("quiz")}
             verrouille={resultatEnregistre}
             erreur={erreur}
           />
@@ -533,7 +559,8 @@ function QuizPage({
   changerReponse,
   cocherChoixMultiple,
   validerQuestion,
-  revenirQuestionPrecedente,
+  elapsedSeconds,
+  tempsQuestion,
   feedback
 }) {
   return (
@@ -549,6 +576,10 @@ function QuizPage({
       </p>
 
       <span className="type-badge">{QUESTION_TYPES[question.type]?.label || question.type}</span>
+
+      <div className="timer-box">
+        ⏱️ Temps sur cette question : {tempsQuestion || elapsedSeconds} seconde(s)
+      </div>
 
       <h2>{question.titre}</h2>
 
@@ -571,10 +602,6 @@ function QuizPage({
       )}
 
       <div className="actions">
-        <button type="button" className="secondary" onClick={revenirQuestionPrecedente}>
-          Retour
-        </button>
-
         <button type="button" onClick={validerQuestion}>
           Valider
         </button>
@@ -661,19 +688,13 @@ function QuestionInput({ question, reponse, changerReponse, cocherChoixMultiple 
   return <p className="erreur">Type de question non reconnu.</p>;
 }
 
-function ResultatPage({ pseudo, score, total, enregistrerResultat, revenir, verrouille, erreur }) {
+function ResultatPage({ pseudo, score, total, enregistrerResultat, verrouille, erreur }) {
   return (
     <>
       <h2>Résultat final</h2>
       <p className="score">
         {pseudo}, ton score est de {score}/{total}.
       </p>
-
-      {!verrouille && (
-        <button type="button" className="secondary" onClick={revenir}>
-          Revenir au quiz
-        </button>
-      )}
 
       <button type="button" onClick={enregistrerResultat}>
         Enregistrer et voir mon classement
